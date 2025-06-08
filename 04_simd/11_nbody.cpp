@@ -3,7 +3,7 @@
 #include <cmath>
 
 int main() {
-  const int N = 8;
+  const int N = 16;
   float x[N], y[N], m[N], fx[N], fy[N] , mask[N];
   for(int i=0; i<N; i++) {
     x[i] = drand48();
@@ -12,41 +12,42 @@ int main() {
     fx[i] = fy[i] = 0;
     mask[i] = i;
   }
-  __m256 M = _mm256_load_ps(mask);
-  __m256 mvec = _mm256_load_ps(m);
+  __m512 M = _mm512_load_ps(mask);
+  __m512 mvec = _mm512_load_ps(m);
   for(int i=0; i<N; i++) {
-    __m256 xi = _mm256_set1_ps(i);
-    __mmask8 mask = _mm256_cmp_ps_mask(xi, M, _MM_CMPINT_EQ);
+    __m512 xi = _mm512_set1_ps(i);
+    __mmask16 mask = _mm512_cmp_ps_mask(xi, M, _MM_CMPINT_EQ);
     
-    __m256 xi = _mm256_set1_ps(x[i]);
-    __m256 yi = _mm256_set1_ps(y[i]);
+    __m512 xi = _mm512_set1_ps(x[i]);
+    __m512 yi = _mm512_set1_ps(y[i]);
 
-    __m256 xvec = _mm256_load_ps(x);
-    __m256 yvec = _mm256_load_ps(y);
+    __m512 xvec = _mm512_load_ps(x);
+    __m512 yvec = _mm512_load_ps(y);
 
-    __m256 Fx = _mm256_load_ps(fx);
-    __m256 Fy = _mm256_load_ps(fy);
+    __m512 Fx = _mm512_load_ps(fx);
+    __m512 Fy = _mm512_load_ps(fy);
 
-    __m256 rx = _mm256_sub_ps( xi , xvec );
-    __m256 ry = _mm256_sub_ps( yi , xvec );
+    __m512 rx = _mm512_sub_ps( xi , xvec );
+    __m512 ry = _mm512_sub_ps( yi , xvec );
 
-    __m256 m_rx = _mm256_mul_ps( mvec , xvec );
-    __m256 m_ry = _mm256_mul_ps( mvec , yvec );
+    __m512 m_rx = _mm512_mul_ps( mvec , xvec );
+    __m512 m_ry = _mm512_mul_ps( mvec , yvec );
 
-    __m256 r_rx = _mm256_mul_ps( rx , rx );
-    __m256 r_ry = _mm256_mul_ps( ry , ry );
-    __m256 r = _mm256_add_ps( rx , ry );
+    __m512 r_rx = _mm512_mul_ps( rx , rx );
+    __m512 r_ry = _mm512_mul_ps( ry , ry );
+    __m512 r = _mm512_add_ps( rx , ry );
+    __m512 r = _mm512_rsqrt14_ps( r );
 
-    __m256 r3 = _mm256_mul_ps( r , r );
-    __m256 r3 = _mm256_mul_ps( r3 , r );
+    __m512 r3 = _mm512_mul_ps( r , r );
+    __m512 r3 = _mm512_mul_ps( r3 , r );
 
-    __m256 r_Fx = _mm256_mul_ps(Fx , mvec);
-    __m256 r_Fy = _mm256_mul_ps(Fy , mvec);
+    __m512 r_Fx = _mm512_mul_ps(Fx , mvec);
+    __m512 r_Fy = _mm512_mul_ps(Fy , mvec);
 
-    r_Fx = _mm256_div_ps(r_Fx , r3);
-    r_Fy = _mm256_div_ps(r_Fy , r3);
-    r_Fx = _mm256_sub_ps(Fx , r_Fx);
-    r_Fy = _mm256_sub_ps(Fy , r_Fy);
+    r_Fx = _mm512_div_ps(r_Fx , r3);
+    r_Fy = _mm512_div_ps(r_Fy , r3);
+    r_Fx = _mm512_sub_ps(Fx , r_Fx);
+    r_Fy = _mm512_sub_ps(Fy , r_Fy);
 
     Fx = _mm512_mask_blend_ps(mask, r_Fx, Fx);
     Fy = _mm512_mask_blend_ps(mask, r_Fy, Fy);
